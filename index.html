@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>کارگاه من</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#21262d;
+  --border:#30363d;--gold:#f0a500;--gold2:#ffd166;
+  --green:#3fb950;--blue:#58a6ff;--red:#f85149;
+  --text:#e6edf3;--muted:#8b949e;
+  --wood:#a0522d;--metal:#708090;--coin:#f0a500;
+}
+body{
+  font-family:Tahoma,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+#gameScreen{
+  display:block;
+  width:100%;
+  max-width:430px;
+  padding:12px;
+}
+.topBar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:10px 16px;
+  margin-bottom:12px;
+}
+.topTitle{font-size:16px;font-weight:bold;color:var(--gold)}
+.topLevel{font-size:12px;color:var(--muted)}
+.resources{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-bottom:12px;
+}
+.resCard{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:10px;
+  text-align:center;
+}
+.resEmoji{font-size:24px}
+.resName{font-size:11px;color:var(--muted);margin:2px 0}
+.resVal{font-size:16px;font-weight:bold}
+.resVal.wood{color:var(--wood)}
+.resVal.metal{color:var(--metal)}
+.resVal.coin{color:var(--coin)}
+.resRate{font-size:10px;color:var(--green)}
+.section{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+}
+.sectionTitle{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+.workshopBtn{
+  width:100%;
+  padding:18px;
+  border:2px dashed var(--border);
+  border-radius:16px;
+  background:var(--surface2);
+  color:var(--text);
+  font-size:15px;
+  font-family:inherit;
+  cursor:pointer;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+.workshopBtn .icon{
+  font-size:32px;
+  display:block;
+  margin-bottom:6px
+}
+.workshopBtn small{
+  font-size:11px;
+  color:var(--muted)
+}
+.buildings{
+  display:flex;
+  flex-direction:column;
+  gap:8px
+}
+.building{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 14px;
+}
+.bLeft{
+  display:flex;
+  align-items:center;
+  gap:10px
+}
+.bEmoji{font-size:28px}
+.bName{font-size:14px;font-weight:bold}
+.bDesc{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:2px
+}
+.bLevel{
+  font-size:10px;
+  color:var(--gold);
+  background:rgba(240,165,0,.12);
+  border-radius:6px;
+  padding:1px 6px;
+  margin-top:3px;
+  display:inline-block;
+}
+.bBtn{
+  border:0;
+  border-radius:10px;
+  padding:8px 14px;
+  font-size:12px;
+  font-weight:bold;
+  cursor:pointer;
+  font-family:inherit;
+  white-space:nowrap;
+}
+.bBtn.buy{background:var(--blue);color:#fff}
+.bBtn.upgrade{background:var(--gold);color:#0d1117}
+.bBtn.locked{
+  background:var(--surface);
+  color:var(--muted);
+  border:1px solid var(--border);
+  cursor:not-allowed;
+}
+.logBox{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  max-height:90px;
+  overflow-y:auto;
+}
+.logItem{
+  font-size:12px;
+  color:var(--muted);
+  padding:2px 0;
+  border-bottom:1px solid rgba(255,255,255,.04)
+}
+.logItem .hi{color:var(--gold2)}
+.toast{
+  position:fixed;
+  bottom:24px;
+  left:50%;
+  transform:translateX(-50%) translateY(60px);
+  background:#22c55e;
+  color:#fff;
+  padding:10px 20px;
+  border-radius:20px;
+  font-size:13px;
+  font-weight:bold;
+  transition:transform .3s;
+  pointer-events:none;
+  z-index:999;
+}
+.toast.show{
+  transform:translateX(-50%) translateY(0)
+}
+.floatTxt{
+  position:fixed;
+  pointer-events:none;
+  font-size:14px;
+  font-weight:bold;
+  color:var(--gold2);
+  z-index:998;
+  animation:floatUp .8s ease forwards;
+}
+@keyframes floatUp{
+  0%{opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(-50px)}
+}
+</style>
+</head>
+
+<body>
+
+<div id="gameScreen">
+
+  <div class="topBar">
+    <div class="topTitle">🏭 کارگاه من</div>
+    <div class="topLevel">
+      سطح: <span id="workshopLevel">۱</span>
+    </div>
+  </div>
+
+  <div class="resources">
+
+    <div class="resCard">
+      <div class="resEmoji">🪵</div>
+      <div class="resName">چوب</div>
+      <div class="resVal wood" id="woodVal">۰</div>
+      <div class="resRate" id="woodRate">+۰/ثانیه</div>
+    </div>
+
+    <div class="resCard">
+      <div class="resEmoji">⚙️</div>
+      <div class="resName">فلز</div>
+      <div class="resVal metal" id="metalVal">۰</div>
+      <div class="resRate" id="metalRate">+۰/ثانیه</div>
+    </div>
+
+    <div class="resCard">
+      <div class="resEmoji">🪙</div>
+      <div class="resName">سکه</div>
+      <div class="resVal coin" id="coinVal">۵۰</div>
+      <div class="resRate" id="coinRate">+۰/ثانیه</div>
+    </div>
+
+  </div>
+
+  <div class="section">
+
+    <div class="sectionTitle">🔨 کار دستی</div>
+
+    <button class="workshopBtn"
+            onclick="clickResource('wood',event)">
+      <span class="icon">🪵</span>
+      قطع درخت
+      <br>
+      <small>
+        هر کلیک = +<span id="woodClick">۱</span> چوب
+      </small>
+    </button>
+
+    <button class="workshopBtn"
+            onclick="clickResource('metal',event)">
+      <span class="icon">⚙️</span>
+      استخراج فلز
+      <br>
+      <small>
+        هر کلیک = +<span id="metalClick">۱</span> فلز
+      </small>
+    </button>
+
+  </div>
+
+  <div class="section">
+
+    <div class="sectionTitle">🏗️ ساختمان‌ها</div>
+
+    <div class="buildings" id="buildingList"></div>
+
+  </div>
+
+  <div class="section">
+
+    <div class="sectionTitle">📋 گزارش فعالیت</div>
+
+    <div class="logBox" id="logBox"></div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+const S={
+  wood:0,
+  metal:0,
+  coin:50,
+
+  woodPerClick:1,
+  metalPerClick:1,
+
+  woodPerSec:0,
+  metalPerSec:0,
+  coinPerSec:0,
+
+  workshopLevel:1,
+
+  buildings:{
+    sawmill:{
+      owned:false,
+      level:0
+    },
+
+    smelter:{
+      owned:false,
+      level:0
+    },
+
+    workshop:{
+      owned:false,
+      level:0
+    },
+
+    market:{
+      owned:false,
+      level:0
+    }
+  }
+};
+
+
+const BLD=[
+
+  {
+    id:"sawmill",
+    name:"اره‌کشی",
+    emoji:"🪚",
+    desc:"تولید ۱ چوب/ثانیه",
+
+    buyCost:{
+      coin:30
+    },
+
+    upgCost:l=>({
+      coin:l*40,
+      metal:l*5
+    }),
+
+    prod:{
+      wood:1
+    }
+  },
+
+  {
+    id:"smelter",
+    name:"ذوب‌خانه",
+    emoji:"🔥",
+    desc:"تولید ۱ فلز/ثانیه",
+
+    buyCost:{
+      coin:60,
+      wood:20
+    },
+
+    upgCost:l=>({
+      coin:l*50,
+      wood:l*10
+    }),
+
+    prod:{
+      metal:1
+    }
+  },
+
+  {
+    id:"workshop",
+    name:"کارگاه بزرگ",
+    emoji:"🏭",
+    desc:"تولید ۲ سکه/ثانیه",
+
+    buyCost:{
+      coin:120,
+      wood:40,
+      metal:20
+    },
+
+    upgCost:l=>({
+      coin:l*80,
+      metal:l*15,
+      wood:l*20
+    }),
+
+    prod:{
+      coin:2
+    }
+  },
+
+  {
+    id:"market",
+    name:"بازار",
+    emoji:"🛒",
+    desc:"هر ۵ ثانیه ۵ چوب → ۳ سکه",
+
+    buyCost:{
+      coin:200,
+      metal:50
+    },
+
+    upgCost:l=>({
+      coin:l*120,
+      metal:l*30
+    }),
+
+    prod:{
+      special:"market"
+    }
+  }
+
+];
+
+
+function fa(n){
+
+  return Math.floor(n)
+    .toString()
+    .replace(
+      /\d/g,
+      d=>"۰۱۲۳۴۵۶۷۸۹"[d]
+    );
+
+}
+
+
+function canAfford(c){
+
+  for(
+    const [r,v]
+    of Object.entries(c)
+  ){
+
+    if(S[r]<v)
+      return false;
+
+  }
+
+  return true;
+
+}
+
+
+function spend(c){
+
+  for(
+    const [r,v]
+    of Object.entries(c)
+  ){
+
+    S[r]-=v;
+
+  }
+
+}
+
+
+function costStr(c){
+
+  return Object.entries(c)
+    .map(
+      ([r,v])=>({
+        coin:"🪙",
+        wood:"🪵",
+        metal:"⚙️"
+      })[r]+fa(v)
+    )
+    .join(" ");
+
+}
+
+
+function updateRes(){
+
+  document.getElementById("woodVal")
+    .textContent=fa(S.wood);
+
+  document.getElementById("metalVal")
+    .textContent=fa(S.metal);
+
+  document.getElementById("coinVal")
+    .textContent=fa(S.coin);
+
+  document.getElementById("woodRate")
+    .textContent=
+      "+"+fa(S.woodPerSec)+"/ثانیه";
+
+  document.getElementById("metalRate")
+    .textContent=
+      "+"+fa(S.metalPerSec)+"/ثانیه";
+
+  document.getElementById("coinRate")
+    .textContent=
+      "+"+fa(S.coinPerSec)+"/ثانیه";
+
+  document.getElementById("workshopLevel")
+    .textContent=fa(S.workshopLevel);
+
+  document.getElementById("woodClick")
+    .textContent=fa(S.woodPerClick);
+
+  document.getElementById("metalClick")
+    .textContent=fa(S.metalPerClick);
+
+}
+
+
+function renderBuildings(){
+
+  const box=
+    document.getElementById("buildingList");
+
+  box.innerHTML="";
+
+  BLD.forEach(b=>{
+
+    const bs=S.buildings[b.id];
+
+    const div=
+      document.createElement("div");
+
+    div.className="building";
+
+    const lvlBadge=
+      bs.owned
+      ?
+      `<span class="bLevel">
+        سطح ${fa(bs.level)}
+       </span>`
+      :
+      "";
+
+    let btn="";
+
+    if(!bs.owned){
+
+      const can=
+        canAfford(b.buyCost);
+
+      btn=
+        `<button
+          class="bBtn ${can?"buy":"locked"}"
+          onclick="buyBuilding('${b.id}')">
+
+          ${can?"خرید":"قفل"}
+
+          <br>
+
+          <small>
+            ${costStr(b.buyCost)}
+          </small>
+
+        </button>`;
+
+    }
+
+    else if(bs.level<5){
+
+      const uc=
+        b.upgCost(bs.level);
+
+      const can=
+        canAfford(uc);
+
+      btn=
+        `<button
+          class="bBtn ${can?"upgrade":"locked"}"
+          onclick="upgradeBuilding('${b.id}')">
+
+          ${can?"ارتقا":"ناکافی"}
+
+          <br>
+
+          <small>
+            ${costStr(uc)}
+          </small>
+
+        </button>`;
+
+    }
+
+    else{
+
+      btn=
+        `<button class="bBtn locked">
+          حداکثر
+        </button>`;
+
+    }
+
+    div.innerHTML=
+      `<div class="bLeft">
+
+        <div class="bEmoji">
+          ${b.emoji}
+        </div>
+
+        <div>
+
+          <div class="bName">
+            ${b.name}
+          </div>
+
+          <div class="bDesc">
+            ${b.desc}
+          </div>
+
+          ${lvlBadge}
+
+        </div>
+
+      </div>
+
+      ${btn}`;
+
+    box.appendChild(div);
+
+  });
+
+}
+
+
+function addLog(msg){
+
+  const box=
+    document.getElementById("logBox");
+
+  const d=
+    document.createElement("div");
+
+  d.className="logItem";
+
+  d.innerHTML=msg;
+
+  box.prepend(d);
+
+  while(box.children.length>15)
+    box.lastChild.remove();
+
+}
+
+
+function showToast(msg){
+
+  const t=
+    document.getElementById("toast");
+
+  t.textContent=msg;
+
+  t.classList.add("show");
+
+  setTimeout(
+    ()=>t.classList.remove("show"),
+    2000
+  );
+
+}
+
+
+function floatText(txt,x,y){
+
+  const el=
+    document.createElement("div");
+
+  el.className="floatTxt";
+
+  el.textContent=txt;
+
+  el.style.left=x+"px";
+
+  el.style.top=y+"px";
+
+  document.body.appendChild(el);
+
+  setTimeout(
+    ()=>el.remove(),
+    800
+  );
+
+}
+
+
+function clickResource(type,e){
+
+  const r=
+    e.currentTarget.getBoundingClientRect();
+
+  if(type==="wood"){
+
+    S.wood+=S.woodPerClick;
+
+    floatText(
+      "+"+
+      fa(S.woodPerClick)+
+      " 🪵",
+      r.left+r.width/2,
+      r.top+10
+    );
+
+  }
+
+  else{
+
+    S.metal+=S.metalPerClick;
+
+    floatText(
+      "+"+
+      fa(S.metalPerClick)+
+      " ⚙️",
+      r.left+r.width/2,
+      r.top+10
+    );
+
+  }
+
+  updateRes();
+
+  checkLevel();
+
+}
+
+
+function buyBuilding(id){
+
+  const b=
+    BLD.find(x=>x.id===id);
+
+  const bs=
+    S.buildings[id];
+
+  if(!canAfford(b.buyCost)){
+
+    showToast("منابع کافی نیست");
+
+    return;
+
+  }
+
+  spend(b.buyCost);
+
+  bs.owned=true;
+
+  bs.level=1;
+
+  recalcRates();
+
+  updateRes();
+
+  renderBuildings();
+
+  addLog(
+    `🏗️ <span class="hi">
+      ${b.name}
+    </span> ساخته شد`
+  );
+
+  showToast(
+    b.emoji+
+    " "+
+    b.name+
+    " فعال شد!"
+  );
+
+}
+
+
+function upgradeBuilding(id){
+
+  const b=
+    BLD.find(x=>x.id===id);
+
+  const bs=
+    S.buildings[id];
+
+  const uc=
+    b.upgCost(bs.level);
+
+  if(!canAfford(uc)){
+
+    showToast("منابع کافی نیست");
+
+    return;
+
+  }
+
+  spend(uc);
+
+  bs.level++;
+
+  recalcRates();
+
+  updateRes();
+
+  renderBuildings();
+
+  addLog(
+    `⬆️ <span class="hi">
+      ${b.name}
+    </span>
+    سطح ${fa(bs.level)}`
+  );
+
+  showToast(
+    b.emoji+
+    " سطح "+
+    fa(bs.level)+
+    "!"
+  );
+
+}
+
+
+function recalcRates(){
+
+  S.woodPerSec=
+    S.buildings.sawmill.owned
+    ?
+    S.buildings.sawmill.level
+    :
+    0;
+
+  S.metalPerSec=
+    S.buildings.smelter.owned
+    ?
+    S.buildings.smelter.level
+    :
+    0;
+
+  S.coinPerSec=
+    S.buildings.workshop.owned
+    ?
+    S.buildings.workshop.level*2
+    :
+    0;
+
+  S.woodPerClick=
+    1+
+    Math.floor(
+      S.workshopLevel/2
+    );
+
+  S.metalPerClick=
+    1+
+    Math.floor(
+      S.workshopLevel/2
+    );
+
+}
+
+
+function checkLevel(){
+
+  const total=
+    S.wood+
+    S.metal+
+    S.coin;
+
+  const nl=
+    Math.min(
+      10,
+      Math.floor(total/200)+1
+    );
+
+  if(nl>S.workshopLevel){
+
+    S.workshopLevel=nl;
+
+    addLog(
+      `🏭 سطح
+      <span class="hi">
+        ${fa(nl)}
+      </span>!`
+    );
+
+    showToast(
+      "🎉 سطح "+
+      fa(nl)+
+      "!"
+    );
+
+    recalcRates();
+
+  }
+
+}
+
+
+/*
+  تولید منابع:
+  هر 250 میلی‌ثانیه
+*/
+
+setInterval(()=>{
+
+  if(S.woodPerSec>0)
+    S.wood+=
+      S.woodPerSec/4;
+
+  if(S.metalPerSec>0)
+    S.metal+=
+      S.metalPerSec/4;
+
+  if(S.coinPerSec>0)
+    S.coin+=
+      S.coinPerSec/4;
+
+  updateRes();
+
+  checkLevel();
+
+},250);
+
+
+/*
+  بازار:
+  دقیقاً هر 5 ثانیه
+*/
+
+setInterval(()=>{
+
+  const market=
+    S.buildings.market;
+
+  if(
+    market.owned &&
+    S.wood>=5
+  ){
+
+    S.wood-=5;
+
+    S.coin+=
+      3*market.level;
+
+    addLog(
+      `🛒 بازار:
+      ۵ 🪵 فروخته شد و
+      ${fa(3*market.level)}
+      🪙 دریافت شد`
+    );
+
+    updateRes();
+
+  }
+
+},5000);
+
+
+/*
+  شروع مستقیم بازی
+*/
+
+window.addEventListener(
+  "DOMContentLoaded",
+  ()=>{
+
+    recalcRates();
+
+    renderBuildings();
+
+    updateRes();
+
+    addLog(
+      "🎮 بازی شروع شد!"
+    );
+
+  }
+);
+
+</script>
+
+</body>
+</html>
